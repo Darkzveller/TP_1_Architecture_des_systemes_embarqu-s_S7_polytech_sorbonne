@@ -1,0 +1,68 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+entity top_level is
+  port (
+    -- Clock
+    MAX10_CLK1_50 : in std_logic;
+    -- Keys / Switches
+    KEY : in std_logic_vector(1 downto 0); -- KEY1..KEY0 (actif bas)
+    SW  : in std_logic_vector(9 downto 0); -- SW9..SW0
+    -- LEDs
+    LEDR : out std_logic_vector(9 downto 0); -- LEDR9..LEDR0
+    -- 7-seg (actif bas, 7 bits : g..a)
+    HEX0 : out std_logic_vector(6 downto 0);
+    HEX1 : out std_logic_vector(6 downto 0);
+    HEX2 : out std_logic_vector(6 downto 0);
+    HEX3 : out std_logic_vector(6 downto 0);
+    HEX4 : out std_logic_vector(6 downto 0);
+    HEX5 : out std_logic_vector(6 downto 0)
+  );
+end entity;
+architecture rtl of top_level is
+  component nios2_system is
+    port (
+      clk_clk                           : in std_logic := 'X';
+      reset_reset_n                     : in std_logic := 'X';
+      led_external_connection_export    : out std_logic_vector(9 downto 0);
+      sw_external_connection_export : in std_logic_vector(9 downto 0) :=
+      (others => 'X');
+      key_external_connection_export : in std_logic_vector(1 downto 0) :=
+      (others => 'X');
+      hex3_0_external_connection_export : out std_logic_vector(31 downto 0);
+      hex5_4_external_connection_export : out std_logic_vector(15 downto 0)
+    );
+  end component;
+  signal reset_n : std_logic;
+  signal hex3_0  : std_logic_vector(31 downto 0);
+  signal hex5_4  : std_logic_vector(15 downto 0);
+begin
+  reset_n <= KEY(0);
+  --------------------------------------------------------------------
+  -- Instance du système Nios II
+  --------------------------------------------------------------------
+  u0 : component nios2_system
+    port map
+    (
+      clk_clk                           => MAX10_CLK1_50,
+      reset_reset_n                     => reset_n,
+      led_external_connection_export    => LEDR,
+      sw_external_connection_export => SW,
+      key_external_connection_export    => KEY,
+      hex3_0_external_connection_export => hex3_0,
+      hex5_4_external_connection_export => hex5_4
+    );
+    --------------------------------------------------------------------
+    -- Unpacking des 7-seg
+    -- Convention courante (2 registres parallèles) :
+    -- hex3_0 : [6:0]=HEX0, [14:8]=HEX1, [22:16]=HEX2, [30:24]=HEX3
+    -- hex5_4 : [6:0]=HEX4, [14:8]=HEX5
+    -- Les bits [7], [15], [23], [31] sont souvent "unused" / DP.
+    --------------------------------------------------------------------
+    HEX0 <= hex3_0(6 downto 0);
+    HEX1 <= hex3_0(14 downto 8);
+    HEX2 <= hex3_0(22 downto 16);
+    HEX3 <= hex3_0(30 downto 24);
+    HEX4 <= hex5_4(6 downto 0);
+    HEX5 <= hex5_4(14 downto 8);
+  end architecture;

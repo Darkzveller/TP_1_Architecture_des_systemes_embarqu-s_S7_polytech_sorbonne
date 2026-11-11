@@ -1,0 +1,35 @@
+/*
+ * "Hello World" example.
+ *
+ * This example prints 'Hello from Nios II' to the STDOUT stream. It runs on
+ * the Nios II 'standard', 'full_featured', 'fast', and 'low_cost' example
+ * designs. It runs with or without the MicroC/OS-II RTOS and requires a STDOUT
+ * device in your system's hardware.
+ * The memory footprint of this hosted application is ~69 kbytes by default
+ * using the standard reference design.
+ *
+ * For a reduced footprint version of this template, and an explanation of how
+ * to reduce the memory footprint for a given application, see the
+ * "small_hello_world" template.
+ *
+ */
+
+#include <stdio.h>
+#include <stdint.h>
+#define LED_PIO_BASE 0x00001000u /* adresse base des LED (exemple) */
+#define SW_PIO_BASE 0x00001040u /* adresse base des interrupteurs */
+
+
+int main()
+{
+  printf("Hello from Nios II!\n");
+
+  /* pointeurs volatils vers les registres Data */
+   volatile uint32_t *led_pio = (uint32_t *)LED_PIO_BASE;
+   volatile uint32_t *sw_pio = (uint32_t *)SW_PIO_BASE;
+   while (1) {
+   uint32_t sw_value = *sw_pio; /* lit les 10 bits des interrupteurs */
+   *led_pio = sw_value; /* écrit le motif sur les LED */
+   }
+  return 0;
+}
